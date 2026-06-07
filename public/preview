@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Terms of Use | Tej Photography</title>
+  <style>
+    body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#fff;color:#111;line-height:1.7}
+    .container{max-width:900px;margin:auto;padding:40px 20px}
+    h1,h2{color:#000;line-height:1.3} h1{font-size:34px;margin-bottom:10px} h2{font-size:22px;margin-top:34px}
+    p,li{font-size:16px} a{color:#111;font-weight:700}.note{background:#f5f5f5;border-left:4px solid #111;padding:14px 16px;margin:20px 0}
+    .footer{margin-top:40px;padding-top:20px;border-top:1px solid #ddd;color:#555;font-size:14px}
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>Terms of Use</h1>
+    <p><strong>Website:</strong> Tej Photography</p>
+    <p><strong>Last Updated:</strong> 7 June 2026</p>
+
+    <div class="note">
+      <p>By accessing or using Tej Photography, you agree to these Terms of Use. If you do not agree, please do not use this website.</p>
+    </div>
+
+    <h2>1. Website Purpose</h2>
+    <p>Tej Photography is a photography portfolio website that may include public galleries, private client galleries, print selling, subscriptions, QR/UPI payment proof submission, discount coupons, referral features, contact forms, and an admin/owner control panel.</p>
+
+    <h2>2. User Eligibility</h2>
+    <p>You must use this website only for lawful purposes. By using client login, subscription, payment, referral, or contact features, you confirm that the information you provide is accurate and belongs to you.</p>
+
+    <h2>3. Account and Client Gallery Access</h2>
+    <ul>
+      <li>Private client galleries are accessible only through valid login details or authorized private links.</li>
+      <li>You are responsible for keeping your email, password, and access link confidential.</li>
+      <li>You must not share private gallery access with unauthorized persons.</li>
+      <li>Tej Photography may suspend or remove access if misuse, unauthorized sharing, or suspicious activity is found.</li>
+    </ul>
+
+    <h2>4. Subscriptions and Memberships</h2>
+    <p>Tej Photography may offer membership plans such as Bonus Membership, Silver, Gold, and Platinum. Each plan may provide different download qualities for photos/videos.</p>
+    <ul>
+      <li>Access is provided according to the active membership level or approved VIP bypass access.</li>
+      <li>Membership benefits may change if website features or pricing are updated.</li>
+      <li>Locked content may require upgrade or admin approval before access is granted.</li>
+    </ul>
+
+    <h2>5. Payments and Approval</h2>
+    <p>Payments may be made through QR code/UPI or other methods shown on the website. Submitting payment proof does not guarantee instant access.</p>
+    <ul>
+      <li>Payment status may be Pending, Approved, or Rejected.</li>
+      <li>Access is unlocked only after owner/admin approval.</li>
+      <li>Users must submit correct UPI ID, transaction ID, and payment screenshot/proof when requested.</li>
+      <li>False, edited, duplicate, or invalid payment proof may result in rejection or account restriction.</li>
+    </ul>
+
+    <h2>6. Print Orders</h2>
+    <p>Users may select print sizes and submit print purchase requests through the website. Final confirmation, delivery timeline, availability, pricing, and shipping details may be confirmed by the owner/admin separately.</p>
+
+    <h2>7. Discounts, Coupons, and Referral Rewards</h2>
+    <ul>
+      <li>Coupons and referral rewards are subject to availability and admin rules.</li>
+      <li>Referral coupons may provide discounts such as 25% depending on website settings.</li>
+      <li>Coupons may expire, be limited to one use, or be rejected if misused.</li>
+      <li>Tej Photography may cancel coupons generated through fraud, spam, or fake referrals.</li>
+    </ul>
+
+    <h2>8. VIP Bypass Access</h2>
+    <p>VIP bypass access may be provided manually by the owner/admin. VIP users may get free access to selected or full content without buying a subscription. VIP access can be modified, expired, or removed by the owner/admin at any time.</p>
+
+    <h2>9. Content Ownership and Copyright</h2>
+    <p>All photographs, videos, logos, designs, text, graphics, and gallery content on Tej Photography are owned by Tej Photography or their respective owners unless stated otherwise.</p>
+    <ul>
+      <li>You may not copy, sell, repost, modify, distribute, or commercially use content without written permission.</li>
+      <li>Downloaded photos/videos are for the permitted personal or client use only, based on your membership or gallery access.</li>
+      <li>Unauthorized use of photos/videos may result in access removal and legal action.</li>
+    </ul>
+
+    <h2>10. Prohibited Activities</h2>
+    <p>You agree not to:</p>
+    <ul>
+      <li>Hack, bypass, damage, or overload the website.</li>
+      <li>Try to access the admin panel without permission.</li>
+      <li>Steal, scrape, or mass-download website content.</li>
+      <li>Upload harmful files, fake payment proof, spam, or abusive messages.</li>
+      <li>Share private client content without permission.</li>
+      <li>Use the website for illegal or harmful activities.</li>
+    </ul>
+
+    <h2>11. Admin Panel and Security</h2>
+    <p>The admin/owner control panel is restricted to authorized owners only. Unauthorized login attempts, password guessing, or misuse of admin features is strictly prohibited.</p>
+
+    <h2>12. Demo Features and LocalStorage</h2>
+    <p>If this website is built using only HTML, CSS, JavaScript, and localStorage, some features may work as a demo system only. Demo storage is not a replacement for secure backend authentication, encrypted databases, or real payment gateway verification.</p>
+    <p>For production use, Tej Photography should use HTTPS, secure server-side authentication, encrypted password storage, backend database, and trusted payment integration.</p>
+
+    <h2>13. No Guarantee</h2>
+    <p>We try to keep the website accurate, secure, and available, but we do not guarantee that the website will always be error-free, uninterrupted, or fully secure.</p>
+
+    <h2>14. Limitation of Liability</h2>
+    <p>Tej Photography will not be responsible for indirect loss, data loss, unauthorized access caused by user negligence, third-party service failure, device issues, or misuse of website features.</p>
+
+    <h2>15. Termination of Access</h2>
+    <p>We may suspend, restrict, or terminate access to the website, private gallery, membership, VIP access, coupons, or downloads if these Terms are violated.</p>
+
+    <h2>16. Changes to Terms</h2>
+    <p>We may update these Terms of Use at any time. Continued use of the website after updates means you accept the revised Terms.</p>
+
+    <h2>17. Contact</h2>
+    <p>For questions about these Terms, contact:</p>
+    <p><strong>Tej Photography</strong><br />Email: your-email@example.com<br />Phone: your-phone-number</p>
+
+    <p class="footer">© 2026 Tej Photography. All rights reserved.</p>
+  </main>
+</body>
+</html>

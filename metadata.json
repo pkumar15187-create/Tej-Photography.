@@ -1,0 +1,6 @@
+{
+  "name": "Tej Photography",
+  "description": "Premium professional photography portfolio, private client gallery, print shop, and elite subscription system with a robust owner control panel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
