@@ -329,6 +329,12 @@ export default function GalleryView({
                   </h2>
                   <p className="text-xs text-zinc-500 mt-1 font-mono">Original Native Resolution: {selectedMedia.resolution}</p>
 
+                  {selectedMedia.description && (
+                    <p className="text-xs text-zinc-400 mt-3 leading-relaxed border-l-2 border-zinc-700 pl-3 italic">
+                      {selectedMedia.description}
+                    </p>
+                  )}
+
                   <div className="w-10 h-[2px] bg-white my-5" />
 
                   {/* Operational Segment 1: Download Media Files depending on Subscriptions */}

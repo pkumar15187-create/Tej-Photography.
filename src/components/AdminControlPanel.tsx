@@ -22,6 +22,7 @@ interface AdminControlPanelProps {
   clients: ClientGalleryAccess[];
   onAddClient: (client: ClientGalleryAccess) => void;
   onDeleteClient: (id: string) => void;
+  onEditClient: (id: string, updatedFields: Partial<ClientGalleryAccess>) => void;
   
   payments: SubscriptionPayment[];
   onApprovePayment: (id: string) => void;
@@ -50,6 +51,7 @@ export default function AdminControlPanel({
   clients,
   onAddClient,
   onDeleteClient,
+  onEditClient,
   payments,
   onApprovePayment,
   onRejectPayment,
@@ -80,6 +82,9 @@ export default function AdminControlPanel({
   const [newMediaUrl, setNewMediaUrl] = useState('');
   const [newMediaPrice, setNewMediaPrice] = useState(1500);
   const [newMediaResolution, setNewMediaResolution] = useState<'480p' | '720p' | '1080p' | '2K' | '4K' | '8K'>('8K');
+  const [newMediaDescription, setNewMediaDescription] = useState('');
+  const [newMediaIsPremium, setNewMediaIsPremium] = useState(false);
+  const [newMediaIsFeatured, setNewMediaIsFeatured] = useState(false);
   
   // Media Edit form states
   const [editingMedia, setEditingMedia] = useState<PhotoVideo | null>(null);
@@ -89,6 +94,12 @@ export default function AdminControlPanel({
   const [editUrl, setEditUrl] = useState('');
   const [editPrice, setEditPrice] = useState(1500);
   const [editResolution, setEditResolution] = useState<'480p' | '720p' | '1080p' | '2K' | '4K' | '8K'>('8K');
+  const [editDescription, setEditDescription] = useState('');
+  const [editIsPremium, setEditIsPremium] = useState(false);
+  const [editIsFeatured, setEditIsFeatured] = useState(false);
+
+  // Bulk selection state
+  const [selectedBulkMediaIds, setSelectedBulkMediaIds] = useState<string[]>([]);
 
   // Client Form state
   const [clientEmail, setClientEmail] = useState('');
@@ -109,6 +120,8 @@ export default function AdminControlPanel({
   const [settingsQrUrl, setSettingsQrUrl] = useState(settings.qrCodeUrl || '');
   const [settingsAccountHolder, setSettingsAccountHolder] = useState(settings.accountHolderName || '');
   const [settingsInstructions, setSettingsInstructions] = useState(settings.paymentInstructions || '');
+  const [settingsOfferText, setSettingsOfferText] = useState(settings.limitedTimeOfferText || '');
+  const [settingsOfferExpiry, setSettingsOfferExpiry] = useState(settings.limitedTimeOfferExpiry || '');
   const [paymentSearch, setPaymentSearch] = useState('');
 
   const handleAuthSubmit = (e: React.FormEvent) => {
@@ -143,12 +156,18 @@ export default function AdminControlPanel({
       type: newMediaType,
       url: newMediaUrl,
       price: Number(newMediaPrice),
-      resolution: newMediaResolution
+      resolution: newMediaResolution,
+      description: newMediaDescription.trim(),
+      isPremium: newMediaIsPremium,
+      isFeatured: newMediaIsFeatured
     });
 
     // Reset inputs
     setNewMediaTitle('');
     setNewMediaUrl('');
+    setNewMediaDescription('');
+    setNewMediaIsPremium(false);
+    setNewMediaIsFeatured(false);
     alert('Successfully added photograph/clip to public galleries.');
   };
 
@@ -176,6 +195,9 @@ export default function AdminControlPanel({
     setEditUrl(item.url);
     setEditPrice(item.price || 1500);
     setEditResolution(item.resolution);
+    setEditDescription(item.description || '');
+    setEditIsPremium(!!item.isPremium);
+    setEditIsFeatured(!!item.isFeatured);
   };
 
   const handleEditSave = (id: string) => {
@@ -189,9 +211,13 @@ export default function AdminControlPanel({
       type: editType,
       url: editUrl.trim(),
       price: Number(editPrice),
-      resolution: editResolution
+      resolution: editResolution,
+      description: editDescription.trim(),
+      isPremium: editIsPremium,
+      isFeatured: editIsFeatured
     });
     setEditingMedia(null);
+    setEditDescription('');
     alert('Asset details updated successfully!');
   };
 
@@ -222,6 +248,77 @@ export default function AdminControlPanel({
     alert(`Successfully generated private user access profile for ${clientEmail}.`);
   };
 
+  const handleExtendMembership = (cli: ClientGalleryAccess) => {
+    let baseDate = new Date();
+    if (cli.expiryDate) {
+      const parsed = Date.parse(cli.expiryDate);
+      if (!isNaN(parsed)) {
+        baseDate = new Date(parsed);
+      }
+    }
+    baseDate.setDate(baseDate.getDate() + 30);
+    const yyyy = baseDate.getFullYear();
+    const mm = String(baseDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(baseDate.getDate()).padStart(2, '0');
+    const extendedDateStr = `${yyyy}-${mm}-${dd}`;
+    onEditClient(cli.id, { expiryDate: extendedDateStr });
+  };
+
+  const downloadClientsCSV = () => {
+    const csvRows = [
+      ['ID', 'Email', 'Access Scope', 'Downloads Allowed', 'Downloads Used', 'Is VIP', 'Expiry Date', 'Membership Level Override', 'Is Blocked']
+    ];
+    clients.forEach(c => {
+      csvRows.push([
+        c.id,
+        c.email,
+        c.galleryAccess,
+        String(c.allowedDownloads),
+        String(c.downloadsCount),
+        c.isVipBypass ? 'TRUE' : 'FALSE',
+        c.expiryDate,
+        c.membershipLevelOverride,
+        c.isBlocked ? 'TRUE' : 'FALSE'
+      ]);
+    });
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + csvRows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `tej_clients_report_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const downloadPaymentsCSV = () => {
+    const csvRows = [
+      ['ID', 'User Email', 'Plan Name', 'Amount (INR)', 'UPI ID', 'Transaction ID (UTR)', 'Status', 'Timestamp']
+    ];
+    payments.forEach(p => {
+      csvRows.push([
+        p.id,
+        p.userEmail,
+        p.planName,
+        String(p.amount),
+        p.upiId,
+        p.transactionId,
+        p.status,
+        p.timestamp || ''
+      ]);
+    });
+    const csvContent = "data:text/csv;charset=utf-8," 
+      + csvRows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `tej_payments_report_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   // Add Coupon code trigger
   const handleCouponSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -247,7 +344,9 @@ export default function AdminControlPanel({
       upiId: settingsUpi.trim(),
       qrCodeUrl: settingsQrUrl.trim(),
       accountHolderName: settingsAccountHolder.trim(),
-      paymentInstructions: settingsInstructions.trim()
+      paymentInstructions: settingsInstructions.trim(),
+      limitedTimeOfferText: settingsOfferText.trim(),
+      limitedTimeOfferExpiry: settingsOfferExpiry.trim()
     });
     setSaveSuccess(true);
     setTimeout(() => setSaveSuccess(false), 3000);
@@ -455,6 +554,8 @@ export default function AdminControlPanel({
                     >
                       <option value="landscape">Landscape Gallery</option>
                       <option value="portrait">Portrait Gallery</option>
+                      <option value="private">Private Client Gallery</option>
+                      <option value="prints">Museum Prints Gallery</option>
                     </select>
                   </div>
 
@@ -495,6 +596,39 @@ export default function AdminControlPanel({
                     </select>
                   </div>
 
+                  <div className="sm:col-span-2">
+                    <label className="block text-zinc-400 mb-1">Extra Details / Description:</label>
+                    <textarea
+                      value={newMediaDescription}
+                      onChange={(e) => setNewMediaDescription(e.target.value)}
+                      placeholder="e.g. Captured in early morning mist using 85mm prime lens with natural backlighting. Perfect highlight retention."
+                      rows={3}
+                      className="w-full bg-zinc-900 border border-white/10 rounded py-2 px-3 text-white focus:outline-none placeholder:text-zinc-700"
+                    />
+                  </div>
+
+                  <div className="flex items-center space-x-2 p-3.5 bg-zinc-900/50 rounded-lg border border-white/5">
+                    <input
+                      type="checkbox"
+                      id="opt_premium"
+                      checked={newMediaIsPremium}
+                      onChange={(e) => setNewMediaIsPremium(e.target.checked)}
+                      className="w-4 h-4 rounded text-black bg-zinc-900 border-white/15 focus:ring-0"
+                    />
+                    <label htmlFor="opt_premium" className="text-zinc-300 font-sans text-xs cursor-pointer select-none">Mark Premium Item (Subscription gated)</label>
+                  </div>
+
+                  <div className="flex items-center space-x-2 p-3.5 bg-zinc-900/50 rounded-lg border border-white/5">
+                    <input
+                      type="checkbox"
+                      id="opt_featured"
+                      checked={newMediaIsFeatured}
+                      onChange={(e) => setNewMediaIsFeatured(e.target.checked)}
+                      className="w-4 h-4 rounded text-black bg-zinc-900 border-white/15 focus:ring-0"
+                    />
+                    <label htmlFor="opt_featured" className="text-zinc-300 font-sans text-xs cursor-pointer select-none">Featured Mainpage Showcase Carousel</label>
+                  </div>
+
                   <button
                     type="submit"
                     className="sm:col-span-2 w-full mt-2 bg-white hover:bg-zinc-200 text-black py-2.5 text-xs font-bold uppercase tracking-widest rounded transition-all flex items-center justify-center space-x-2"
@@ -504,47 +638,87 @@ export default function AdminControlPanel({
                   </button>
                 </form>
 
-                {/* Media Management Table lists */}
-                <div className="space-y-4">
-                  <h3 className="font-display text-sm font-bold uppercase tracking-wider text-white">Live Asset Collection ({photosVideos.length})</h3>
-                  
-                  <div className="border border-white/5 rounded-xl divide-y divide-white/5 overflow-hidden text-xs font-mono">
-                    {photosVideos.map((item) => (
-                      <div key={item.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-zinc-900/10">
-                        <div className="flex items-center space-x-3 truncate">
-                          <img src={item.url} referrerPolicy="no-referrer" alt="" className="w-10 h-10 object-cover rounded bg-zinc-800" />
-                          <div className="truncate">
-                            <p className="font-bold text-[#dddddd] truncate">{item.title}</p>
-                            <p className="text-[10px] text-zinc-500 capitalize">{item.category} &middot; {item.type} &middot; INR {item.price || 1500} &middot; Res: {item.resolution}</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2.5">
-                          <button
-                            type="button"
-                            onClick={() => handleEditInit(item)}
-                            className="p-1 px-2.5 border border-white/10 hover:border-white text-[10px] tracking-wide font-mono rounded uppercase text-zinc-300 hover:text-white transition-colors"
-                          >
-                            EDIT DETAILS
-                          </button>
-                          
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (confirm(`Do you absolutely wish to delete ${item.title} from portfolio catalogs?`)) {
-                                onDeleteMedia(item.id);
-                              }
-                            }}
-                            className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded transition-all cursor-pointer"
-                            title="Delete Asset"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                 {/* Media Management Table lists */}
+                 <div className="space-y-4">
+                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                     <div>
+                       <h3 className="font-display text-sm font-bold uppercase tracking-wider text-white">Live Asset Collection ({photosVideos.length})</h3>
+                       <p className="text-[10px] text-zinc-500 font-mono mt-0.5">Use checkboxes next to items to select multiple for simultaneous removal.</p>
+                     </div>
+                     {selectedBulkMediaIds.length > 0 && (
+                       <button
+                         type="button"
+                         onClick={() => {
+                           if (confirm(`Are you absolutely sure you want to bulk-delete ${selectedBulkMediaIds.length} items from the portfolio?`)) {
+                             selectedBulkMediaIds.forEach(id => onDeleteMedia(id));
+                             setSelectedBulkMediaIds([]);
+                             alert("Bulk deletion completed.");
+                           }
+                         }}
+                         className="bg-rose-600 hover:bg-rose-500 text-white font-mono text-[10px] uppercase font-bold tracking-widest px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+                       >
+                         <Trash2 className="w-3.5 h-3.5" />
+                         <span>DELETE SELECTED ({selectedBulkMediaIds.length})</span>
+                       </button>
+                     )}
+                   </div>
+                   
+                   <div className="border border-white/5 rounded-xl divide-y divide-white/5 overflow-hidden text-xs font-mono">
+                     {photosVideos.map((item) => {
+                       const isSelected = selectedBulkMediaIds.includes(item.id);
+                       return (
+                         <div key={item.id} className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-zinc-900/10 hover:bg-zinc-900/20 transition-all">
+                           <div className="flex items-center space-x-3 truncate">
+                             <input
+                               type="checkbox"
+                               checked={isSelected}
+                               onChange={(e) => {
+                                 if (e.target.checked) {
+                                   setSelectedBulkMediaIds([...selectedBulkMediaIds, item.id]);
+                                 } else {
+                                   setSelectedBulkMediaIds(selectedBulkMediaIds.filter(id => id !== item.id));
+                                 }
+                               }}
+                               className="w-4 h-4 rounded text-black bg-zinc-900 border-white/10 focus:ring-0 cursor-pointer"
+                             />
+                             <img src={item.url} referrerPolicy="no-referrer" alt="" className="w-10 h-10 object-cover rounded bg-zinc-800" />
+                             <div className="truncate">
+                               <div className="flex items-center gap-1.5 flex-wrap">
+                                 <p className="font-bold text-[#dddddd] truncate">{item.title}</p>
+                                 {item.isPremium && <span className="bg-amber-500/15 text-amber-400 border border-amber-500/20 text-[9px] px-1.5 py-0.2 rounded uppercase font-bold">Premium</span>}
+                                 {item.isFeatured && <span className="bg-sky-500/15 text-sky-400 border border-sky-500/20 text-[9px] px-1.5 py-0.2 rounded uppercase font-bold">Featured</span>}
+                               </div>
+                               <p className="text-[10px] text-zinc-500 capitalize">{item.category} &middot; {item.type} &middot; INR {item.price || 1500} &middot; Res: {item.resolution}</p>
+                             </div>
+                           </div>
+ 
+                           <div className="flex items-center space-x-2.5">
+                             <button
+                               type="button"
+                               onClick={() => handleEditInit(item)}
+                               className="p-1 px-2.5 border border-white/10 hover:border-white text-[10px] tracking-wide font-mono rounded uppercase text-zinc-300 hover:text-white transition-colors"
+                             >
+                               EDIT DETAILS
+                             </button>
+                             
+                             <button
+                               type="button"
+                               onClick={() => {
+                                 if (confirm(`Do you absolutely wish to delete ${item.title} from portfolio catalogs?`)) {
+                                   onDeleteMedia(item.id);
+                                 }
+                               }}
+                               className="p-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 rounded transition-all cursor-pointer"
+                               title="Delete Asset"
+                             >
+                               <Trash2 className="w-4 h-4" />
+                             </button>
+                           </div>
+                         </div>
+                       );
+                     })}
+                   </div>
+                 </div>
 
                 {/* Dynamic Master Asset Editorial Overlay Modal */}
                 {editingMedia && (
@@ -583,6 +757,8 @@ export default function AdminControlPanel({
                           >
                             <option value="landscape">Landscape Gallery</option>
                             <option value="portrait">Portrait Gallery</option>
+                            <option value="private">Private Client Gallery</option>
+                            <option value="prints">Museum Prints Gallery</option>
                           </select>
                         </div>
 
@@ -646,6 +822,39 @@ export default function AdminControlPanel({
                               />
                             </label>
                           </div>
+                        </div>
+
+                        <div className="sm:col-span-2">
+                          <label className="block text-zinc-400 mb-1">Extra Details / Description:</label>
+                          <textarea
+                            value={editDescription}
+                            onChange={(e) => setEditDescription(e.target.value)}
+                            placeholder="Add shooting specs, gear details, locations, dynamic scope..."
+                            rows={3}
+                            className="w-full bg-zinc-900 border border-white/10 rounded py-2 px-3 text-white focus:outline-none placeholder:text-zinc-700 text-xs"
+                          />
+                        </div>
+
+                        <div className="flex items-center space-x-2 p-3 bg-zinc-900/50 rounded border border-white/5">
+                          <input
+                            type="checkbox"
+                            id="edit_opt_premium"
+                            checked={editIsPremium}
+                            onChange={(e) => setEditIsPremium(e.target.checked)}
+                            className="w-4 h-4 rounded text-black bg-zinc-900 border-white/15 focus:ring-0"
+                          />
+                          <label htmlFor="edit_opt_premium" className="text-zinc-300 font-sans text-xs cursor-pointer select-none">Premium Option (Sub-Lock)</label>
+                        </div>
+
+                        <div className="flex items-center space-x-2 p-3 bg-zinc-900/50 rounded border border-white/5">
+                          <input
+                            type="checkbox"
+                            id="edit_opt_featured"
+                            checked={editIsFeatured}
+                            onChange={(e) => setEditIsFeatured(e.target.checked)}
+                            className="w-4 h-4 rounded text-black bg-zinc-900 border-white/15 focus:ring-0"
+                          />
+                          <label htmlFor="edit_opt_featured" className="text-zinc-300 font-sans text-xs cursor-pointer select-none">Hero Featured Carousel</label>
                         </div>
                       </div>
 
@@ -775,40 +984,79 @@ export default function AdminControlPanel({
                   </button>
                 </form>
 
-                {/* Client Log Details panel */}
-                <div className="space-y-4">
-                  <h3 className="font-display text-sm font-bold uppercase tracking-wider text-white">Authenticated Clients ({clients.length})</h3>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
-                    {clients.map((cli) => (
-                      <div key={cli.id} className="bg-zinc-900 border border-white/5 p-4 rounded-xl flex justify-between gap-4">
-                        <div className="space-y-1 overflow-hidden">
-                          <p className="font-bold text-white truncate text-[13px]">{cli.email}</p>
-                          <p className="text-zinc-500">Security Pass: {cli.password}</p>
-                          <div className="flex flex-wrap gap-1.5 pt-1 text-[9px] uppercase">
-                            <span className="bg-zinc-800 text-zinc-400 px-1 py-0.5 rounded">Scope: {cli.galleryAccess}</span>
-                            <span className="bg-zinc-800 text-zinc-400 px-1 py-0.5 rounded">Credits Used: {cli.downloadsCount}/{cli.allowedDownloads}</span>
-                            {cli.isVipBypass && (
-                              <span className="bg-amber-500/10 text-amber-400 px-1 py-0.5 rounded border border-amber-500/20 font-bold">VIP Bypass</span>
-                            )}
-                          </div>
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            if (confirm(`Absolutely revoke database server authorization for client: ${cli.email}?`)) {
-                              onDeleteClient(cli.id);
-                            }
-                          }}
-                          className="text-rose-400 hover:text-rose-300 shrink-0 self-center"
-                          title="Revoke Authorizations"
-                        >
-                          <Trash2 className="w-4.5 h-4.5" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                 {/* Client Log Details panel */}
+                 <div className="space-y-4">
+                   <div className="flex items-center justify-between gap-4 flex-wrap">
+                     <h3 className="font-display text-sm font-bold uppercase tracking-wider text-white">Authenticated Clients ({clients.length})</h3>
+                     <button
+                       type="button"
+                       onClick={downloadClientsCSV}
+                       className="px-3 py-1.5 bg-[#0a0a0a] border border-white/10 hover:border-white text-zinc-300 hover:text-white rounded uppercase font-mono tracking-wider text-[10px] transition-colors cursor-pointer flex items-center gap-1.5"
+                     >
+                       <span>EXPORT CSV CLIENTS LOG</span>
+                     </button>
+                   </div>
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+                     {clients.map((cli) => (
+                       <div key={cli.id} className={`border p-4 rounded-xl flex justify-between gap-4 transition-all ${
+                         cli.isBlocked 
+                           ? 'bg-rose-950/20 border-rose-500/20 shadow-lg shadow-rose-950/5' 
+                           : 'bg-zinc-900 border-white/5'
+                       }`}>
+                         <div className="space-y-1 overflow-hidden">
+                           <div className="flex items-center gap-1.5 flex-wrap">
+                             <p className="font-bold text-white truncate text-[13px]">{cli.email}</p>
+                             {cli.isBlocked && (
+                               <span className="bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[9px] px-1.5 py-0.2 rounded font-bold uppercase">Blocked</span>
+                             )}
+                           </div>
+                           <p className="text-zinc-500">Security Pass: {cli.password}</p>
+                           <p className="text-zinc-500 text-[10px]">Expires: {cli.expiryDate || 'N/A'}</p>
+                           <div className="flex flex-wrap gap-1.5 pt-1 text-[9px] uppercase">
+                             <span className="bg-zinc-800 text-zinc-400 px-1 py-0.5 rounded">Scope: {cli.galleryAccess}</span>
+                             <span className="bg-zinc-800 text-zinc-400 px-1 py-0.5 rounded">Credits Used: {cli.downloadsCount}/{cli.allowedDownloads}</span>
+                             {cli.isVipBypass && (
+                               <span className="bg-amber-500/10 text-amber-400 px-1 py-0.5 rounded border border-amber-500/20 font-bold font-sans">VIP Bypass</span>
+                             )}
+                           </div>
+                           <div className="flex items-center gap-2 pt-3 flex-wrap">
+                             <button
+                               type="button"
+                               onClick={() => handleExtendMembership(cli)}
+                               className="px-2 py-1 bg-zinc-805 hover:bg-zinc-800 text-zinc-300 hover:text-white border border-white/10 rounded text-[9px] font-bold uppercase transition-colors"
+                             >
+                               +30 Days Expiry
+                             </button>
+                             <button
+                               type="button"
+                               onClick={() => onEditClient(cli.id, { isBlocked: !cli.isBlocked })}
+                               className={`px-2 py-1 rounded text-[9px] font-bold uppercase transition-colors border ${
+                                 cli.isBlocked 
+                                   ? 'bg-emerald-950/40 border-emerald-500/20 hover:bg-emerald-950/60 text-emerald-300' 
+                                   : 'bg-rose-950/40 border-rose-500/20 hover:bg-rose-950/60 text-rose-300'
+                               }`}
+                             >
+                               {cli.isBlocked ? 'Unblock' : 'Block Client'}
+                             </button>
+                           </div>
+                         </div>
+ 
+                         <button
+                           onClick={() => {
+                             if (confirm(`Absolutely revoke database server authorization for client: ${cli.email}?`)) {
+                               onDeleteClient(cli.id);
+                             }
+                           }}
+                           className="text-rose-400 hover:text-rose-300 shrink-0 self-center"
+                           title="Revoke Authorizations"
+                         >
+                           <Trash2 className="w-4.5 h-4.5" />
+                         </button>
+                       </div>
+                     ))}
+                   </div>
+                 </div>
               </div>
             )}
 
@@ -834,14 +1082,20 @@ export default function AdminControlPanel({
                       <p className="text-xs text-zinc-500 font-mono mt-1">Cross-check UTR numbers against incoming payments to greenlight subscriptions.</p>
                     </div>
 
-                    {/* Search Payments Bar */}
-                    <div className="w-full md:w-80">
+                    <div className="flex items-center gap-3 w-full md:w-auto flex-wrap">
+                      <button
+                        type="button"
+                        onClick={downloadPaymentsCSV}
+                        className="px-3 py-2 bg-[#0a0a0a] border border-white/10 hover:border-white text-zinc-300 hover:text-white rounded uppercase font-mono tracking-wider text-[10px] transition-colors cursor-pointer"
+                      >
+                        EXPORT PAYMENTS CSV
+                      </button>
                       <input
                         type="text"
                         value={paymentSearch}
                         onChange={(e) => setPaymentSearch(e.target.value)}
-                        placeholder="Search payments by email, UTR, UPI, plan..."
-                        className="w-full bg-zinc-900 border border-white/10 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-white font-mono text-xs"
+                        placeholder="Search payments..."
+                        className="bg-zinc-900 border border-white/10 rounded-lg py-2 px-3 text-white focus:outline-none focus:border-white font-mono text-xs w-full md:w-60"
                       />
                     </div>
                   </div>
@@ -1162,6 +1416,32 @@ export default function AdminControlPanel({
                       rows={4}
                       className="w-full bg-zinc-900 border border-white/10 rounded-lg py-2.5 px-3 text-white focus:outline-none focus:border-white transition-colors font-sans text-xs"
                     />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-5 bg-zinc-900/30 rounded-xl border border-white/5">
+                    <div>
+                      <label className="block text-zinc-400 mb-1.5 uppercase text-[10px]">Limited-Time Offer Announcement Ticker Banner:</label>
+                      <input
+                        type="text"
+                        value={settingsOfferText}
+                        onChange={(e) => setSettingsOfferText(e.target.value)}
+                        placeholder="e.g. MONSOON BONANZA: Save 40% on Gold/Platinum memberships using GOLDSPRING!"
+                        className="w-full bg-zinc-900 border border-white/10 rounded-lg py-2.5 px-3 text-white focus:outline-none focus:border-white transition-colors"
+                      />
+                      <p className="text-[9px] text-zinc-500 mt-1 uppercase">Leave blank to hide the announcement ticker banner from of all user views.</p>
+                    </div>
+
+                    <div>
+                      <label className="block text-zinc-400 mb-1.5 uppercase text-[10px]">Announcement Countdown Expiry (YYYY-MM-DDTHH:MM:SS):</label>
+                      <input
+                        type="text"
+                        value={settingsOfferExpiry}
+                        onChange={(e) => setSettingsOfferExpiry(e.target.value)}
+                        placeholder="e.g. 2026-12-31T23:59:59"
+                        className="w-full bg-zinc-900 border border-[#ffffff]/10 rounded-lg py-2.5 px-3 text-white focus:outline-none focus:border-white font-sans"
+                      />
+                      <p className="text-[9px] text-zinc-500 mt-1 uppercase">Ensure standard ISO format is written to ensure the live countdown clock ticks correctly.</p>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start bg-zinc-900/40 p-5 rounded-xl border border-white/5">

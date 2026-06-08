@@ -396,7 +396,7 @@ export default function Subscriptions({
                         ) : (
                           <div className="w-32 h-32 shrink-0 bg-neutral-900 rounded border border-dashed border-white/15 flex flex-col items-center justify-center p-2 text-center text-zinc-500 font-mono text-[9px]">
                             <span>NO QR CODE CONFIGURED</span>
-                            <span className="text-[7.5px] mt-1.5 text-zinc-600">(Owner must set in #tej-admin-panel)</span>
+                            <span className="text-[7.5px] mt-1.5 text-zinc-600">(Owner configuration pending)</span>
                           </div>
                         )}
                         <div className="flex-1 font-mono text-xs text-zinc-400 space-y-2 w-full">

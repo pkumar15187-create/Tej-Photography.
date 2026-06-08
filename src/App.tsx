@@ -22,6 +22,7 @@ import Contact from './components/Contact';
 import AdminControlPanel from './components/AdminControlPanel';
 import TrollPage from './components/TrollPage';
 import OnboardingWall from './components/OnboardingWall';
+import PromoCountdownBanner from './components/PromoCountdownBanner';
 
 // Lucide icons
 import { Camera, ArrowRight, Sparkles, Award, Shield, ShoppingBag, Eye, Heart, Compass, Check } from 'lucide-react';
@@ -166,6 +167,23 @@ export default function App() {
     const list = clients.filter(c => c.id !== id);
     setClients(list);
     db.saveClients(list);
+  };
+
+  const handleEditClient = (id: string, updatedFields: Partial<ClientGalleryAccess>) => {
+    const list = clients.map(c => c.id === id ? { ...c, ...updatedFields } : c);
+    setClients(list);
+    db.saveClients(list);
+    
+    // Sync active client session if it's the edited account
+    if (activeClient && activeClient.id === id) {
+      const updated = list.find(c => c.id === id) || null;
+      setActiveClient(updated);
+      if (updated) {
+        localStorage.setItem('tej_logged_in_client', JSON.stringify(updated));
+      } else {
+        localStorage.removeItem('tej_logged_in_client');
+      }
+    }
   };
 
   const handleApprovePayment = (id: string) => {
@@ -487,6 +505,13 @@ export default function App() {
         onOpenAuth={() => setShowAuthOverlay(true)}
       />
 
+      {settings.limitedTimeOfferText && (
+        <PromoCountdownBanner 
+          text={settings.limitedTimeOfferText} 
+          expiry={settings.limitedTimeOfferExpiry || ''} 
+        />
+      )}
+
       {/* Onboarding block if client is not logged in and not looking at the administrative portal */}
       {!activeClient && currentView !== 'tej-admin-panel' && (
         <OnboardingWall
@@ -739,6 +764,7 @@ export default function App() {
             clients={clients}
             onAddClient={handleAddClient}
             onDeleteClient={handleDeleteClient}
+            onEditClient={handleEditClient}
             payments={payments}
             onApprovePayment={handleApprovePayment}
             onRejectPayment={handleRejectPayment}

@@ -6,6 +6,9 @@ export interface PhotoVideo {
   url: string;
   price?: number; // Price of print purchase
   resolution: '480p' | '720p' | '1080p' | '2K' | '4K' | '8K';
+  description?: string;
+  isPremium?: boolean;
+  isFeatured?: boolean;
 }
 
 export interface ClientGalleryAccess {
@@ -18,6 +21,7 @@ export interface ClientGalleryAccess {
   isVipBypass: boolean;
   expiryDate: string;
   membershipLevelOverride: 'none' | 'bonus' | 'silver' | 'gold' | 'platinum';
+  isBlocked?: boolean;
 }
 
 export interface SubscriptionPayment {
@@ -63,6 +67,8 @@ export interface AdminSettings {
   qrCodeUrl: string; // Base64 or mock QR code
   accountHolderName: string;
   paymentInstructions: string;
+  limitedTimeOfferText?: string;
+  limitedTimeOfferExpiry?: string;
 }
 
 export interface CartItem {
